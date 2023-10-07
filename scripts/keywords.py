@@ -8,6 +8,7 @@ operations = {
     "img2img": processing.StableDiffusionProcessingImg2Img,
 }
 needs_hr_recalc = False
+first_batch_entity_sampler_params = {}
 
 
 def is_debug():
@@ -121,8 +122,13 @@ class RandomizerKeywordSamplerParam(extra_networks.ExtraNetwork):
             if not isinstance(p, ty):
                 return
 
-        value = params_list[0].items[0]
-        value = self.param_type(value)
+        if self.name in first_batch_entity_sampler_params:
+            value = first_batch_entity_sampler_params[self.name]
+        else:
+            value = params_list[0].items[0]
+            value = self.param_type(value)
+
+            first_batch_entity_sampler_params[self.name] = value
 
         if self.adjust_cb:
             value = self.adjust_cb(value, p)
@@ -335,6 +341,10 @@ class Script(scripts.Script):
             recalc_hires_fix(p)
 
         needs_hr_recalc = False
+
+    def postprocess_batch(self, p, *args, **kwargs):
+        global first_batch_entity_sampler_params;
+        first_batch_entity_sampler_params = {}
 
 
 config_params = [
