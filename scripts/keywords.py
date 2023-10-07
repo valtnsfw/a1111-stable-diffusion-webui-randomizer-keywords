@@ -197,10 +197,11 @@ class RandomizerKeywordCheckpoint(extra_networks.ExtraNetwork):
 
     def deactivate(self, p):
         if self.original_checkpoint_info is not None:
-            if is_debug():
-                print(f"[RandomizerKeywords] Reset CHECKPOINT: {self.original_checkpoint_info.name}")
+            # Disable for speedup
+            # if is_debug():
+                # print(f"[RandomizerKeywords] Reset CHECKPOINT: {self.original_checkpoint_info.name}")
 
-            sd_models.reload_model_weights(shared.sd_model, self.original_checkpoint_info)
+            # sd_models.reload_model_weights(shared.sd_model, self.original_checkpoint_info)
             self.original_checkpoint_info = None
 
 
@@ -245,11 +246,12 @@ class RandomizerKeywordVAE(extra_networks.ExtraNetwork):
 
     def deactivate(self, p):
         if self.has_original:
-            if is_debug():
-                print(f"[RandomizerKeywords] Reset VAE: {self.original_vae_info.name}")
+            # Disable for speedup
+            # if is_debug():
+                # print(f"[RandomizerKeywords] Reset VAE: {self.original_vae_info.name}")
 
-            shared.opts.data["sd_vae"] = self.original_vae_info
-            sd_vae.reload_vae_weights()
+            # shared.opts.data["sd_vae"] = self.original_vae_info
+            # sd_vae.reload_vae_weights()
 
             self.original_checkpoint_info = None
             self.has_original = False
