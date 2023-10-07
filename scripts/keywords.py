@@ -1,6 +1,6 @@
 import re
 import sys
-from modules import scripts, script_callbacks, ui_extra_networks, extra_networks, shared, sd_models, sd_vae, sd_samplers, processing
+from modules import scripts, script_callbacks, ui_extra_networks, extra_networks, shared, sd_models, sd_vae, sd_samplers, processing, rng
 
 
 operations = {
@@ -38,6 +38,8 @@ def recalc_hires_fix(p):
         # Don't want code duplication
         p.init(p.all_prompts, p.all_seeds, p.all_subseeds)
 
+        p.rng = rng.ImageRNG((processing.opt_C, p.height // processing.opt_f, p.width // processing.opt_f), p.seeds, subseeds=p.subseeds, subseed_strength=p.subseed_strength, seed_resize_from_h=p.seed_resize_from_h, seed_resize_from_w=p.seed_resize_from_w)
+        
         if is_debug():
             print("====================")
             print("After:")
