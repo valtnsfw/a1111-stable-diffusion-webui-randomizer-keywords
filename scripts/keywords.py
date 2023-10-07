@@ -8,7 +8,7 @@ operations = {
     "img2img": processing.StableDiffusionProcessingImg2Img,
 }
 needs_hr_recalc = False
-first_batch_entity_sampler_params = {}
+first_batch_entity_params = {}
 
 
 def is_debug():
@@ -122,13 +122,13 @@ class RandomizerKeywordSamplerParam(extra_networks.ExtraNetwork):
             if not isinstance(p, ty):
                 return
 
-        if self.name in first_batch_entity_sampler_params:
-            value = first_batch_entity_sampler_params[self.name]
+        if self.name in first_batch_entity_params:
+            value = first_batch_entity_params[self.name]
         else:
             value = params_list[0].items[0]
             value = self.param_type(value)
 
-            first_batch_entity_sampler_params[self.name] = value
+            first_batch_entity_params[self.name] = value
 
         if self.adjust_cb:
             value = self.adjust_cb(value, p)
@@ -169,6 +169,20 @@ def validate_sampler_name(x, p):
         return f"Invalid sampler '{x}'"
     return None
 
+def get_xyz_plot_axe_param_names() -> set[int]:
+    xyz_plot_axe_param_names = set()
+    for axe in {'x', 'y', 'z'}:
+        xyz_plot_axe_param_names.add(f"xyz_plot_{axe}")
+
+    return xyz_plot_axe_param_names
+
+def is_xyz_plot() -> bool:
+    for xyz_plot_axe_param_name in get_xyz_plot_axe_param_names():
+        xyz_plot_axe = getattr(shared.state, xyz_plot_axe_param_name, None)
+        if xyz_plot_axe is not None and len(xyz_plot_axe.values) > 0:
+            return True
+
+    return False
 
 class RandomizerKeywordCheckpoint(extra_networks.ExtraNetwork):
     def __init__(self):
@@ -193,7 +207,11 @@ class RandomizerKeywordCheckpoint(extra_networks.ExtraNetwork):
         if is_debug():
             print(f"[RandomizerKeywords] Set CHECKPOINT: {info.name}")
 
-        sd_models.reload_model_weights(shared.sd_model, info)
+        if is_xyz_plot():
+            first_batch_entity_params[self.name] = info
+            
+        if not self.name in first_batch_entity_params:
+            sd_models.reload_model_weights(shared.sd_model, info)
 
     def deactivate(self, p):
         if self.original_checkpoint_info is not None:
@@ -337,6 +355,14 @@ class Script(scripts.Script):
     def show(self, is_img2img):
         return scripts.AlwaysVisible
 
+    def setup(self, p, *args, **kwargs):
+        global first_batch_entity_params
+        first_batch_entity_params = {}
+
+        for xyz_plot_axe_param_name in get_xyz_plot_axe_param_names():
+            if hasattr(shared.state, xyz_plot_axe_param_name):
+                delattr(shared.state, xyz_plot_axe_param_name)
+
     def process_batch(self, p, *args, **kwargs):
         global needs_hr_recalc
         if needs_hr_recalc:
@@ -345,8 +371,9 @@ class Script(scripts.Script):
         needs_hr_recalc = False
 
     def postprocess_batch(self, p, *args, **kwargs):
-        global first_batch_entity_sampler_params;
-        first_batch_entity_sampler_params = {}
+        global first_batch_entity_params;
+        if not is_xyz_plot():
+            first_batch_entity_params = {}
 
 
 config_params = [
