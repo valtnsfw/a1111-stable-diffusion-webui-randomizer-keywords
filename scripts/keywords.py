@@ -9,6 +9,7 @@ operations = {
 }
 needs_hr_recalc = False
 first_batch_entity_params = {}
+processed_xyz_plot_images = 0
 
 
 def is_debug():
@@ -184,12 +185,23 @@ def is_xyz_plot() -> bool:
 
     return False
 
+def xyz_plot_grid_size() -> int:
+    size = 1
+    for xyz_plot_axe_param_name in get_xyz_plot_axe_param_names():
+        xyz_plot_axe = getattr(shared.state, xyz_plot_axe_param_name, None)
+        if xyz_plot_axe is not None:
+            size *= max(1, len(xyz_plot_axe.values))
+
+    return size
+
 class RandomizerKeywordCheckpoint(extra_networks.ExtraNetwork):
     def __init__(self):
         super().__init__("checkpoint")
         self.original_checkpoint_info = None
 
     def activate(self, p, params_list):
+        global processed_xyz_plot_images
+
         if not params_list:
             return
 
@@ -203,15 +215,11 @@ class RandomizerKeywordCheckpoint(extra_networks.ExtraNetwork):
         info = sd_models.get_closet_checkpoint_match(name)
         if info is None:
             raise RuntimeError(f"Unknown checkpoint: {name}")
-
-        if is_debug():
-            print(f"[RandomizerKeywords] Set CHECKPOINT: {info.name}")
-
-        if is_xyz_plot():
-            first_batch_entity_params[self.name] = info
-            
-        if not self.name in first_batch_entity_params:
+          
+        if processed_xyz_plot_images == 0:
             sd_models.reload_model_weights(shared.sd_model, info)
+            if is_debug():
+                print(f"[RandomizerKeywords] Set CHECKPOINT: {info.name}")
 
     def deactivate(self, p):
         if self.original_checkpoint_info is not None:
@@ -362,7 +370,7 @@ class Script(scripts.Script):
         for xyz_plot_axe_param_name in get_xyz_plot_axe_param_names():
             if hasattr(shared.state, xyz_plot_axe_param_name):
                 delattr(shared.state, xyz_plot_axe_param_name)
-
+                
     def process_batch(self, p, *args, **kwargs):
         global needs_hr_recalc
         if needs_hr_recalc:
@@ -371,8 +379,14 @@ class Script(scripts.Script):
         needs_hr_recalc = False
 
     def postprocess_batch(self, p, *args, **kwargs):
-        global first_batch_entity_params;
-        if not is_xyz_plot():
+        global first_batch_entity_params
+        global processed_xyz_plot_images
+        
+        if is_xyz_plot():
+            processed_xyz_plot_images += 1
+
+        if not is_xyz_plot() or processed_xyz_plot_images == xyz_plot_grid_size():
+            processed_xyz_plot_images = 0
             first_batch_entity_params = {}
 
 
