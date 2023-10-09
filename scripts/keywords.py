@@ -1,5 +1,4 @@
 import re
-import sys
 from modules import scripts, script_callbacks, extra_networks, shared, sd_models, sd_samplers, processing, rng
 
 
@@ -191,6 +190,18 @@ class Script(scripts.Script):
             if hasattr(shared.state, xyz_plot_axe_param_name):
                 delattr(shared.state, xyz_plot_axe_param_name)
                 
+    def after_extra_networks_activate(self, p, *args, **kwargs):
+        global all_params
+        cleaned_prompts = []
+        for prompt in p.all_prompts:
+            for param in all_params:
+                prompt = re.sub(f"<{param.name}:.*>", '', prompt)
+            prompt = re.sub(r'\n+', '\n', prompt).strip()
+
+            cleaned_prompts.append(prompt)
+        
+        p.all_prompts = cleaned_prompts
+        
     def process_batch(self, p, *args, **kwargs):
         global needs_hr_recalc
         if needs_hr_recalc:
@@ -247,8 +258,11 @@ other_params = [
     RandomizerKeywordCheckpoint(),
 ]
 
+all_params = sampler_params + other_params
+
 def on_app_started(demo, app):
-    all_params = sampler_params + other_params
+    global all_params
+
     print(f"[RandomizerKeywords] Supported keywords: {', '.join([p.name for p in all_params])}")
 
     for param in all_params:

@@ -11,6 +11,7 @@ When used with Dynamic Prompts, this prompt will pick from a random checkpoint e
 ```
 
 And you can use random choices inside keywords too:
+
 ```
 <width:{512|768}>, <height:{512|768}>
 ```
@@ -48,13 +49,13 @@ This extension adds the following special keywords to be used in prompts:
 - `<mask_blur:2>` - Mask Blur (img2img)
 - `<inpainting_mask_weight:2>` - Inpainting Mask Weight (img2img)
 
-**NOTE**: These keywords will be applied *per-batch*, not per-prompt.
+**NOTE**: These keywords will be applied *per batch*, not per prompt.
 
 ## FORK
 
 I'm not a Python expert but I fixed some issues as best as I could.
 
 1. `width` and `height` keywords are working again.
-2. Image metadata parameters are updated once per batch.
-Imagine you have a prompt `<cfg_scale:{5|10}>` with `Batch Size` equal `2`. In this case, your first image may have `<cfg_scale:5>` both in the prompt and in the image metadata. While the second image may have `<cfg_scale:10>` in there. But the actually applied value is from the first image - `5`. So, I've fixed it and now you'll see `<cfg_scale:10>` in the prompt, but `CFG Scale: 5` in the metadata. Metadata parameters are the correct one. Just clear the prompt keywords if you want to reproduce an image.
-3. If you generate a several batches of images with keywords, every batch will have its own parameters applied. But if you add XYZ Plot to that generation, keywords for the whole grid will be constant. Therefore I highly recommend you using `Infinite Generation` instead of setting `Batch Count` if you want keywords to apply per batch.
+2. 1. Keywords are updated and applied once per batch. They were applied per batch, but updated per prompt before.
+2. 2. Keywords are updated and applied once per `XYZ Plot` despite `Batch Count`. Use `Infinite Generation` instead of setting `Batch Count` therefore keywords will be updated and applied per generation.
+3. Keywords are removed from the prompt once they are applied. They used to stay in the prompt before, distracting you.
