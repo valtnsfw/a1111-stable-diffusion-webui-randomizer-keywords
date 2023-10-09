@@ -1,5 +1,14 @@
 import re
-from modules import scripts, script_callbacks, extra_networks, shared, sd_models, sd_samplers, processing, rng
+from modules import (
+    scripts,
+    script_callbacks,
+    extra_networks,
+    shared,
+    sd_models,
+    sd_samplers,
+    processing,
+    rng,
+)
 
 
 operations = {
@@ -39,8 +48,19 @@ def recalc_hires_fix(p):
         # Don't want code duplication
         p.init(p.all_prompts, p.all_seeds, p.all_subseeds)
 
-        p.rng = rng.ImageRNG((processing.opt_C, p.height // processing.opt_f, p.width // processing.opt_f), p.seeds, subseeds=p.subseeds, subseed_strength=p.subseed_strength, seed_resize_from_h=p.seed_resize_from_h, seed_resize_from_w=p.seed_resize_from_w)
-        
+        p.rng = rng.ImageRNG(
+            (
+                processing.opt_C,
+                p.height // processing.opt_f,
+                p.width // processing.opt_f,
+            ),
+            p.seeds,
+            subseeds=p.subseeds,
+            subseed_strength=p.subseed_strength,
+            seed_resize_from_h=p.seed_resize_from_h,
+            seed_resize_from_w=p.seed_resize_from_w,
+        )
+
         if is_debug():
             print("====================")
             print("After:")
@@ -49,7 +69,7 @@ def recalc_hires_fix(p):
 
 def get_xyz_plot_axe_param_names() -> set[int]:
     xyz_plot_axe_param_names = set()
-    for axe in {'x', 'y', 'z'}:
+    for axe in {"x", "y", "z"}:
         xyz_plot_axe_param_names.add(f"xyz_plot_{axe}")
     return xyz_plot_axe_param_names
 
@@ -72,7 +92,16 @@ def xyz_plot_grid_size() -> int:
 
 
 class RandomizerKeywordSamplerParam(extra_networks.ExtraNetwork):
-    def __init__(self, param_name, param_type, value_min=0, value_max=None, op_type=None, validate_cb=None, adjust_cb=None):
+    def __init__(
+        self,
+        param_name,
+        param_type,
+        value_min=0,
+        value_max=None,
+        op_type=None,
+        validate_cb=None,
+        adjust_cb=None,
+    ):
         super().__init__(param_name)
         self.param_type = param_type
         self.value_min = value_min
@@ -110,7 +139,9 @@ class RandomizerKeywordSamplerParam(extra_networks.ExtraNetwork):
         if self.validate_cb:
             error = self.validate_cb(value, p)
             if error:
-                raise RuntimeError(f"Validation for '{self.name}' keyword failed: {error}")
+                raise RuntimeError(
+                    f"Validation for '{self.name}' keyword failed: {error}"
+                )
 
         if is_debug():
             print(f"[RandomizerKeywords] Set SAMPLER option: {self.name} -> {value}")
@@ -159,7 +190,7 @@ class RandomizerKeywordCheckpoint(extra_networks.ExtraNetwork):
         info = sd_models.get_closet_checkpoint_match(name)
         if info is None:
             raise RuntimeError(f"Unknown checkpoint: {name}")
-          
+
         if processed_xyz_plot_images == 0:
             sd_models.reload_model_weights(shared.sd_model, info)
             if is_debug():
@@ -169,7 +200,7 @@ class RandomizerKeywordCheckpoint(extra_networks.ExtraNetwork):
         if self.original_checkpoint_info is not None:
             # Disable for speedup
             # if is_debug():
-                # print(f"[RandomizerKeywords] Reset CHECKPOINT: {self.original_checkpoint_info.name}")
+            # print(f"[RandomizerKeywords] Reset CHECKPOINT: {self.original_checkpoint_info.name}")
 
             # sd_models.reload_model_weights(shared.sd_model, self.original_checkpoint_info)
             self.original_checkpoint_info = None
@@ -189,19 +220,19 @@ class Script(scripts.Script):
         for xyz_plot_axe_param_name in get_xyz_plot_axe_param_names():
             if hasattr(shared.state, xyz_plot_axe_param_name):
                 delattr(shared.state, xyz_plot_axe_param_name)
-        
+
     def process_batch(self, p, *args, **kwargs):
         global needs_hr_recalc
         if needs_hr_recalc:
             recalc_hires_fix(p)
         needs_hr_recalc = False
-       
+
         global all_params
         cleaned_prompts = []
         for prompt in p.all_prompts:
             for param in all_params:
-                prompt = re.sub(f"<{param.name}:.*>", '', prompt)
-            prompt = re.sub(r'\n+', '\n', prompt).strip()
+                prompt = re.sub(f"<{param.name}:.*>", "", prompt)
+            prompt = re.sub(r"\n+", "\n", prompt).strip()
 
             cleaned_prompts.append(prompt)
 
@@ -222,10 +253,14 @@ sampler_params = [
     RandomizerKeywordSamplerParam("seed", int, -1),
     RandomizerKeywordSamplerParam("subseed", int, -1),
     RandomizerKeywordSamplerParam("subseed_strength", float, 0),
-    RandomizerKeywordSamplerParam("sampler_name", str, validate_cb=validate_sampler_name),
+    RandomizerKeywordSamplerParam(
+        "sampler_name", str, validate_cb=validate_sampler_name
+    ),
     RandomizerKeywordSamplerParam("steps", int, 1),
     RandomizerKeywordSamplerParam("width", int, 64, adjust_cb=lambda x, p: x - (x % 8)),
-    RandomizerKeywordSamplerParam("height", int, 64, adjust_cb=lambda x, p: x - (x % 8)),
+    RandomizerKeywordSamplerParam(
+        "height", int, 64, adjust_cb=lambda x, p: x - (x % 8)
+    ),
     RandomizerKeywordSamplerParam("tiling", bool),
     RandomizerKeywordSamplerParam("restore_faces", bool),
     RandomizerKeywordSamplerParam("s_churn", float),
@@ -235,14 +270,16 @@ sampler_params = [
     RandomizerKeywordSamplerParam("eta", float, 0),
     RandomizerKeywordSamplerParam("ddim_discretize", str),
     RandomizerKeywordSamplerParam("denoising_strength", float),
-
     # txt2img
     RandomizerKeywordSamplerParam("hr_scale", float, 1, op_type="txt2img"),
     RandomizerKeywordSamplerParam("hr_upscaler", str, op_type="txt2img"),
     RandomizerKeywordSamplerParam("hr_second_pass_steps", int, 1, op_type="txt2img"),
-    RandomizerKeywordSamplerParam("hr_resize_x", int, 64, adjust_cb=lambda x, p: x - (x % 8), op_type="txt2img"),
-    RandomizerKeywordSamplerParam("hr_resize_y", int, 64, adjust_cb=lambda x, p: x - (x % 8), op_type="txt2img"),
-
+    RandomizerKeywordSamplerParam(
+        "hr_resize_x", int, 64, adjust_cb=lambda x, p: x - (x % 8), op_type="txt2img"
+    ),
+    RandomizerKeywordSamplerParam(
+        "hr_resize_y", int, 64, adjust_cb=lambda x, p: x - (x % 8), op_type="txt2img"
+    ),
     # img2img
     RandomizerKeywordSamplerParam("mask_blur", float, op_type="img2img"),
     RandomizerKeywordSamplerParam("inpainting_mask_weight", float, op_type="img2img"),
@@ -255,18 +292,24 @@ other_params = [
 
 all_params = sampler_params + other_params
 
+
 def on_app_started(demo, app):
     global all_params
 
-    print(f"[RandomizerKeywords] Supported keywords: {', '.join([p.name for p in all_params])}")
+    print(
+        f"[RandomizerKeywords] Supported keywords: {', '.join([p.name for p in all_params])}"
+    )
 
     for param in all_params:
         extra_networks.register_extra_network(param)
 
 
 def on_ui_settings():
-    section = ('randomizer_keywords', "Randomizer Keywords")
-    shared.opts.add_option("randomizer_keywords_debug", shared.OptionInfo(False, "Print debug messages", section=section))
+    section = ("randomizer_keywords", "Randomizer Keywords")
+    shared.opts.add_option(
+        "randomizer_keywords_debug",
+        shared.OptionInfo(False, "Print debug messages", section=section),
+    )
 
 
 script_callbacks.on_app_started(on_app_started)
