@@ -189,8 +189,13 @@ class Script(scripts.Script):
         for xyz_plot_axe_param_name in get_xyz_plot_axe_param_names():
             if hasattr(shared.state, xyz_plot_axe_param_name):
                 delattr(shared.state, xyz_plot_axe_param_name)
-                
-    def after_extra_networks_activate(self, p, *args, **kwargs):
+        
+    def process_batch(self, p, *args, **kwargs):
+        global needs_hr_recalc
+        if needs_hr_recalc:
+            recalc_hires_fix(p)
+        needs_hr_recalc = False
+       
         global all_params
         cleaned_prompts = []
         for prompt in p.all_prompts:
@@ -199,23 +204,13 @@ class Script(scripts.Script):
             prompt = re.sub(r'\n+', '\n', prompt).strip()
 
             cleaned_prompts.append(prompt)
-        
-        p.all_prompts = cleaned_prompts
-        
-    def process_batch(self, p, *args, **kwargs):
-        global needs_hr_recalc
-        if needs_hr_recalc:
-            recalc_hires_fix(p)
-
-        needs_hr_recalc = False
 
     def postprocess_batch(self, p, *args, **kwargs):
-        global first_batch_entity_params
         global processed_xyz_plot_images
-        
         if is_xyz_plot():
             processed_xyz_plot_images += 1
 
+        global first_batch_entity_params
         if not is_xyz_plot() or processed_xyz_plot_images == xyz_plot_grid_size():
             processed_xyz_plot_images = 0
             first_batch_entity_params = {}
