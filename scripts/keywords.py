@@ -229,12 +229,14 @@ class Script(scripts.Script):
 
         global all_params
         cleaned_prompts = []
-        for prompt in p.all_prompts:
-            for param in all_params:
-                prompt = re.sub(f"<{param.name}:.*>", "", prompt)
-            prompt = re.sub(r"\n+", "\n", prompt).strip()
+        for i, prompt in enumerate(p.all_prompts):
+            if p.iteration * p.batch_size <= i < (p.iteration + 1) * p.batch_size:
+                for param in all_params:
+                    prompt = re.sub(f"<{param.name}:.*>", "", prompt)
+                prompt = re.sub(r"\n+", "\n", prompt).strip()
 
             cleaned_prompts.append(prompt)
+        p.all_prompts = cleaned_prompts
 
     def postprocess_batch(self, p, *args, **kwargs):
         global processed_xyz_plot_images
