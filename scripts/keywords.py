@@ -190,6 +190,9 @@ class RandomizerKeywordCheckpoint(extra_networks.ExtraNetwork):
         info = sd_models.get_closet_checkpoint_match(name)
         if info is None:
             raise RuntimeError(f"Unknown checkpoint: {name}")
+        
+        p.sd_model_name = info.name_for_extra
+        p.sd_model_hash = info.shorthash
 
         if processed_xyz_plot_images == 0:
             sd_models.reload_model_weights(shared.sd_model, info)
