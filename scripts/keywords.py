@@ -269,6 +269,7 @@ class Script(scripts.Script):
 # Sampler parameters that can be controlled. They are parameters in the Processing class.
 sampler_params = [
     RandomizerKeywordSamplerParam("cfg_scale", float, 1),
+    RandomizerKeywordSamplerParam("distilled_cfg_scale", float, 0),
     RandomizerKeywordSamplerParam("seed", int, -1),
     RandomizerKeywordSamplerParam("subseed", int, -1),
     RandomizerKeywordSamplerParam("subseed_strength", float, 0),

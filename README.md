@@ -28,6 +28,7 @@ This extension adds the following special keywords to be used in prompts:
 
 - `<checkpoint:animefull-latest.ckpt>` - SD Checkpoint
 - `<cfg_scale:7>` - CFG Scale
+- `<distilled_cfg_scale:2.5>` - Distilled CFG Scale (Flux)
 - `<seed:1>` - Seed
 - `<subseed:1>` - Subseed
 - `<subseed_strength:1>` - Subseed Strength
