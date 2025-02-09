@@ -32,6 +32,7 @@ This extension adds the following special keywords to be used in prompts:
 - `<subseed:1>` - Subseed
 - `<subseed_strength:1>` - Subseed Strength
 - `<sampler_name:Euler a>` - Sampler Name
+- `<scheduler:Automatic>` - Scheduler Name
 - `<steps:20>` - Sampling Steps
 - `<width:512>` - Width
 - `<height:512>` - Height

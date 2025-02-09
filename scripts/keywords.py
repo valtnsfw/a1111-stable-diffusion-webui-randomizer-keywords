@@ -6,6 +6,7 @@ from modules import (
     shared,
     sd_models,
     sd_samplers,
+    sd_schedulers,
     processing,
     rng,
 )
@@ -169,6 +170,19 @@ def validate_sampler_name(x, p):
     return None
 
 
+def validate_scheduler_name(x, p):
+    choices = sd_schedulers.schedulers
+
+    names = set()
+    for choice in choices:
+        names.add(choice.name)
+        names.add(choice.label)
+
+    if x not in names:
+        return f"Invalid scheduler '{x}'"
+    return None
+
+
 class RandomizerKeywordCheckpoint(extra_networks.ExtraNetwork):
     def __init__(self):
         super().__init__("checkpoint")
@@ -260,6 +274,9 @@ sampler_params = [
     RandomizerKeywordSamplerParam("subseed_strength", float, 0),
     RandomizerKeywordSamplerParam(
         "sampler_name", str, validate_cb=validate_sampler_name
+    ),
+    RandomizerKeywordSamplerParam(
+        "scheduler", str, validate_cb=validate_scheduler_name
     ),
     RandomizerKeywordSamplerParam("steps", int, 1),
     RandomizerKeywordSamplerParam("width", int, 64, adjust_cb=lambda x, p: x - (x % 8)),
